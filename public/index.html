@@ -1,0 +1,911 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AL STUDIO AI &amp; GENERATE 3D MODEL</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: deep-navy glass shell. Login is a split hero (glowing studs, hex outlines) beside a glass card; the app is a pill tab bar over glass panels. One committed dark-blue look. */
+:root {
+  color-scheme: dark;
+  --bg: #030a18;
+  --surface: #071530;
+  --surface-2: #091b3a;
+  --ink: #eaf3ff;
+  --muted: #8fb0d8;
+  --line: #173a73;
+  --glow: rgba(56, 150, 255, 0.42);
+  --accent: #2bb6ff;
+  --accent-2: #1566e8;
+  --accent-ink: #02122b;
+  --accent-soft: rgba(43, 182, 255, 0.14);
+  --ok: #2ee59d;
+  --warn: #f0b35a;
+  --err: #ff8794;
+  --code-bg: #040b1c;
+  --code-ink: #dce9ff;
+  --code-muted: #6f8db8;
+  --stud: rgba(70, 150, 255, 0.13);
+  --glass: linear-gradient(160deg, rgba(16, 48, 110, 0.55), rgba(4, 14, 36, 0.84));
+  --font-display: "Sora", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Manrope", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+* { box-sizing: border-box; scrollbar-color: #1b4a94 transparent; }
+[hidden] { display: none !important; }
+body {
+  margin: 0;
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(720px 430px at 90% -4%, rgba(21, 102, 232, 0.46), transparent 62%),
+    radial-gradient(620px 470px at -8% 38%, rgba(43, 182, 255, 0.14), transparent 60%),
+    radial-gradient(520px 420px at 60% 104%, rgba(21, 102, 232, 0.24), transparent 60%);
+  background-repeat: no-repeat;
+  color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 44px;
+}
+h1, h2, h3 { font-family: var(--font-display); line-height: 1.12; margin: 0; text-wrap: balance; letter-spacing: -0.015em; }
+p { margin: 0; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wrap { max-width: 1080px; margin-inline: auto; }
+.label { font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #8fcfff; }
+.eyebrow { font-size: 12px; font-weight: 700; letter-spacing: 0.24em; text-transform: uppercase; color: var(--accent); }
+
+/* Glass surfaces share one recipe: gradient fill, blue hairline, soft outer glow, bright top edge. */
+.brand, .card, .chat, .panel {
+  position: relative; background: var(--glass); border: 1px solid var(--line); border-radius: 22px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 26px 60px -30px rgba(10, 90, 255, 0.6);
+}
+.brand::before, .card::before, .chat::before, .panel::before {
+  content: ""; position: absolute; inset: 0 28px auto; height: 1px; pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(130, 205, 255, 0.75), transparent);
+}
+
+.btn {
+  position: relative; overflow: hidden; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 44px; padding: 0 18px; border-radius: 12px; font-weight: 700;
+  border: 1px solid var(--line); background: rgba(6, 22, 52, 0.8);
+}
+.btn:hover { border-color: var(--accent); box-shadow: 0 0 22px -8px var(--glow); }
+.btn--primary {
+  background: linear-gradient(180deg, #1a7bff, #0b4bb8); color: #fff; border-color: rgba(130, 200, 255, 0.55);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 12px 30px -12px rgba(30, 130, 255, 0.9);
+}
+.btn--primary::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none; transform: translateX(-120%); transition: transform 0.7s ease;
+  background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.3) 50%, transparent 70%);
+}
+.btn--primary:hover::after { transform: translateX(120%); }
+.btn--primary:hover { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 14px 36px -10px rgba(50, 150, 255, 1); }
+.btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+@media (prefers-reduced-motion: reduce) { .btn--primary::after { transition: none; } }
+
+.field { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+.field input, .field select, .field textarea {
+  background: rgba(2, 10, 28, 0.72); border: 1px solid var(--line); border-radius: 12px; padding: 11px 14px; min-height: 46px; width: 100%;
+}
+.field input::placeholder, .field textarea::placeholder { color: #55709a; }
+.field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(43, 182, 255, 0.18); }
+.msg { min-height: 20px; font-size: 13.5px; color: var(--muted); }
+.msg--err { color: var(--err); }
+.msg--ok { color: var(--ok); }
+.pill {
+  display: inline-flex; align-items: center; gap: 9px; width: fit-content; padding: 7px 15px; border-radius: 999px;
+  border: 1px solid var(--line); background: rgba(4, 16, 40, 0.65); font-size: 13.5px; color: #cfe6ff;
+}
+.pill i { width: 9px; height: 9px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 10px var(--ok); }
+
+/* Login */
+.login { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 20px; align-items: stretch; padding-block: 12px; }
+.brand {
+  overflow: hidden; padding: 34px; display: flex; flex-direction: column; gap: 22px; min-width: 0;
+  background: radial-gradient(circle, var(--stud) 0 28%, transparent 30%) 0 0 / 30px 30px, var(--glass);
+}
+.brand > *:not(.hex) { position: relative; z-index: 1; }
+.hex { position: absolute; color: rgba(90, 175, 255, 0.4); pointer-events: none; }
+.hex--a { width: 54px; height: 54px; top: 22px; right: 28px; }
+.hex--b { width: 30px; height: 30px; top: 92px; right: 96px; opacity: 0.8; transform: rotate(18deg); }
+.hex--c { width: 72px; height: 72px; right: -18px; bottom: 120px; opacity: 0.5; }
+.brand__name { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.brand__mark {
+  font-family: var(--font-display); font-weight: 800; font-size: 26px; line-height: 1; letter-spacing: 0.02em;
+  color: #7fdcff; text-shadow: 0 0 18px rgba(43, 182, 255, 0.75); padding-right: 13px; border-right: 1px solid var(--line);
+}
+.brand__text { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.brand__text b { font-family: var(--font-display); font-weight: 800; font-size: 17px; letter-spacing: 0.06em; line-height: 1.1; }
+.brand__text small { font-size: 10.5px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent); line-height: 1.3; }
+.brand h1 { font-size: clamp(30px, 5vw, 46px); font-weight: 800; max-width: 14ch; }
+.grad { background: linear-gradient(90deg, #7fdcff, #2b8cff); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.brand__feats { display: grid; gap: 10px; padding: 0; margin: 0; list-style: none; }
+.brand__feats li { background: rgba(4, 16, 40, 0.62); border: 1px solid var(--line); border-radius: 14px; padding: 13px 16px; }
+.brand__feats b { font-family: var(--font-display); display: block; font-size: 15px; }
+.brand__feats span { color: var(--muted); font-size: 14px; }
+.snip { background: var(--code-bg); color: var(--code-ink); border: 1px solid var(--line); border-radius: 14px; padding: 15px 17px; font-family: var(--font-mono); font-size: 12.5px; line-height: 1.6; overflow-x: auto; margin: 0; }
+.snip .k { color: #7fb4ff; } .snip .s { color: #8ee8c4; } .snip .c { color: var(--code-muted); }
+.card { padding: 30px; min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+.card h2 { font-size: 26px; font-weight: 700; }
+.seg { display: grid; grid-template-columns: 1fr 1fr; background: rgba(2, 10, 28, 0.72); border: 1px solid var(--line); border-radius: 14px; padding: 4px; }
+.seg button { border: 1px solid transparent; background: transparent; border-radius: 10px; min-height: 38px; font-weight: 700; color: var(--muted); }
+.seg button[aria-selected="true"] {
+  background: linear-gradient(180deg, #1366dd, #0a3f9e); color: #fff; border-color: rgba(120, 190, 255, 0.5);
+  box-shadow: 0 8px 22px -10px rgba(30, 130, 255, 0.9);
+}
+.google { gap: 10px; }
+.or { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; }
+.or::before, .or::after { content: ""; height: 1px; background: linear-gradient(90deg, transparent, var(--line)); flex: 1; }
+.or::after { transform: scaleX(-1); }
+.form { display: flex; flex-direction: column; gap: 14px; }
+.fine { font-size: 12.5px; color: var(--muted); }
+
+/* App shell */
+.top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 16px; margin-bottom: 16px; border-bottom: 1px solid rgba(60, 130, 255, 0.2); }
+.top__user { display: flex; align-items: center; gap: 10px; min-width: 0; flex-wrap: wrap; }
+.top__mail { font-size: 13.5px; color: var(--muted); overflow-wrap: anywhere; }
+.tabs {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; padding: 6px; margin-bottom: 18px;
+  border: 1px solid var(--line); border-radius: 20px; background: rgba(4, 14, 36, 0.72);
+}
+.tabs button {
+  border: 1px solid transparent; background: transparent; border-radius: 14px; padding: 13px 6px; font-weight: 700; font-size: 14px; line-height: 1.25; color: var(--muted);
+}
+.tabs button[aria-selected="true"] {
+  background: linear-gradient(180deg, #1366dd, #0a3f9e); color: #fff; border-color: rgba(120, 190, 255, 0.5);
+  box-shadow: 0 10px 26px -10px rgba(30, 130, 255, 0.95);
+}
+
+/* Assistant */
+.assist { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.chat { display: flex; flex-direction: column; min-width: 0; }
+.chat__log { padding: 20px; display: flex; flex-direction: column; gap: 16px; max-height: 58vh; min-height: 300px; overflow-y: auto; }
+.m { display: flex; flex-direction: column; gap: 6px; min-width: 0; max-width: 100%; }
+.m__who { font-size: 11.5px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+.m--user { align-items: flex-end; }
+.m--user .m__who { color: var(--muted); }
+.m--user .m__body {
+  background: linear-gradient(180deg, #1366dd, #0b45a8); color: #fff; border: 1px solid rgba(120, 190, 255, 0.4);
+  border-radius: 16px 16px 4px 16px; padding: 10px 15px; max-width: 88%; white-space: pre-wrap; overflow-wrap: anywhere;
+}
+.m--ai .m__body { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.m__body .t { white-space: pre-wrap; overflow-wrap: anywhere; }
+.m__body code.i { font-family: var(--font-mono); font-size: 0.9em; background: var(--accent-soft); border: 1px solid var(--line); color: #bfe6ff; border-radius: 6px; padding: 1px 6px; }
+.code { background: var(--code-bg); color: var(--code-ink); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; min-width: 0; }
+.code__bar { display: flex; justify-content: space-between; align-items: center; padding: 7px 9px 7px 14px; font-family: var(--font-mono); font-size: 11.5px; color: var(--accent); border-bottom: 1px solid rgba(60, 130, 255, 0.25); background: rgba(21, 102, 232, 0.08); }
+.code__bar button { background: transparent; border: 1px solid rgba(90, 175, 255, 0.4); color: var(--code-ink); border-radius: 8px; min-height: 28px; padding: 0 11px; font-size: 12px; }
+.code__bar button:hover { border-color: var(--accent); }
+.code pre { margin: 0; padding: 15px; overflow-x: auto; font-family: var(--font-mono); font-size: 13px; line-height: 1.6; tab-size: 4; }
+.dots::after { content: "..."; animation: blink 1.2s steps(4) infinite; }
+@keyframes blink { 0% { content: ""; } 25% { content: "."; } 50% { content: ".."; } 75% { content: "..."; } }
+@media (prefers-reduced-motion: reduce) { .dots::after { animation: none; } }
+.starters { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 20px 16px; }
+.chip { border: 1px solid var(--line); background: rgba(6, 22, 52, 0.8); border-radius: 999px; padding: 7px 14px; font-size: 13px; color: #cfe6ff; }
+.chip:hover { border-color: var(--accent); box-shadow: 0 0 20px -8px var(--glow); }
+.composer { border-top: 1px solid var(--line); padding: 16px 20px 18px; display: grid; gap: 12px; }
+.composer__row { display: grid; grid-template-columns: minmax(0, 190px) minmax(0, 1fr); gap: 12px; }
+.composer textarea { resize: vertical; min-height: 88px; font-family: var(--font-mono); font-size: 13.5px; }
+.composer__actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+
+/* Image to model */
+.bench { display: grid; grid-template-columns: minmax(0, 310px) minmax(0, 1fr); gap: 16px; align-items: start; }
+.panel { padding: 20px; display: flex; flex-direction: column; gap: 15px; min-width: 0; }
+.drop { border: 1.5px dashed rgba(70, 160, 255, 0.5); border-radius: 14px; padding: 18px; text-align: center; background: rgba(2, 10, 28, 0.55); display: grid; gap: 6px; }
+.drop:hover, .drop.over { border-color: var(--accent); background: var(--accent-soft); }
+.drop input { display: none; }
+.range { display: grid; gap: 5px; }
+.range__top { display: flex; justify-content: space-between; font-size: 13.5px; font-weight: 700; }
+.range output { font-family: var(--font-mono); color: var(--accent); font-variant-numeric: tabular-nums; }
+.range input[type="range"] { width: 100%; accent-color: var(--accent); }
+.check { display: flex; gap: 10px; align-items: center; font-size: 14px; }
+.check input { width: 18px; height: 18px; accent-color: var(--accent); }
+.stage {
+  border: 1px solid var(--line); border-radius: 16px; overflow: hidden;
+  background: radial-gradient(circle at 50% 38%, rgba(21, 102, 232, 0.3), rgba(3, 10, 24, 0.92) 72%);
+}
+.stage canvas { display: block; width: 100%; aspect-ratio: 3 / 2; max-width: 100%; }
+.stats { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.stats b { color: #fff; }
+.steps { margin: 0; padding-left: 20px; font-size: 13.5px; color: var(--muted); display: grid; gap: 4px; }
+.steps b { color: #cfe6ff; }
+.note { font-size: 13px; color: var(--muted); border-left: 3px solid var(--accent-2); padding-left: 12px; }
+
+.upl { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 330px); gap: 16px; align-items: start; }
+.types { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.typecard { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; text-align: left; padding: 14px; border-radius: 16px; border: 1px solid var(--line); background: rgba(4, 16, 40, 0.65); }
+.typecard__i { font-size: 20px; line-height: 1; color: var(--accent); margin-bottom: 4px; }
+.typecard small { color: var(--muted); font-size: 12.5px; }
+.typecard:hover { border-color: var(--accent); }
+.typecard[aria-pressed="true"] { border-color: rgba(120, 200, 255, 0.7); background: linear-gradient(160deg, rgba(21, 102, 232, 0.45), rgba(4, 16, 40, 0.82)); box-shadow: 0 0 28px -10px var(--glow); }
+.targetrow { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 8px; }
+.result { border-radius: 14px; border: 1px solid var(--line); padding: 12px 14px; display: grid; gap: 4px; background: rgba(4, 16, 40, 0.7); }
+.result.ok { border-color: rgba(46, 229, 157, 0.55); }
+.result.err { border-color: rgba(255, 135, 148, 0.55); }
+.result b { font-family: var(--font-display); }
+.result p { white-space: pre-line; color: var(--muted); font-size: 14px; overflow-wrap: anywhere; }
+.result a { color: var(--accent); font-weight: 700; width: fit-content; }
+.hist { display: grid; gap: 8px; }
+.hist__item { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: rgba(4, 16, 40, 0.6); }
+.hist__i { color: var(--accent); font-size: 18px; }
+.hist__n { font-weight: 700; overflow-wrap: anywhere; }
+.hist__m { font-size: 12.5px; color: var(--muted); }
+.hist__a { color: var(--accent); font-weight: 700; font-size: 13px; }
+.empty { color: var(--muted); font-size: 14px; }
+
+@media (max-width: 820px) {
+  .login { grid-template-columns: minmax(0, 1fr); }
+  .brand { padding: 24px; }
+  .card { padding: 22px; }
+  .bench, .upl { grid-template-columns: minmax(0, 1fr); }
+  .composer__row { grid-template-columns: minmax(0, 1fr); }
+  .hex--c { display: none; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- LOGIN -->
+  <section id="loginView" class="login" aria-label="Masuk">
+    <div class="brand">
+      <svg class="hex hex--a" viewBox="0 0 40 40" aria-hidden="true"><polygon points="20,2 36,11 36,29 20,38 4,29 4,11" fill="none" stroke="currentColor" stroke-width="1.4"/></svg><svg class="hex hex--b" viewBox="0 0 40 40" aria-hidden="true"><polygon points="20,2 36,11 36,29 20,38 4,29 4,11" fill="none" stroke="currentColor" stroke-width="1.4"/></svg><svg class="hex hex--c" viewBox="0 0 40 40" aria-hidden="true"><polygon points="20,2 36,11 36,29 20,38 4,29 4,11" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>
+      <div class="brand__name"><span class="brand__mark" aria-hidden="true">AL</span><span class="brand__text"><b>AL STUDIO</b><small>AI &amp; GENERATE 3D MODEL</small></span></div>
+      <div class="eyebrow">Roblox AI Workbench</div>
+      <h1>Tulis Luau lebih cepat. <span class="grad">Ubah gambar jadi model.</span></h1>
+      <span class="pill"><i></i>Cepat · Praktis · Terarah</span>
+      <ul class="brand__feats">
+        <li><b>Asisten Luau</b><span>Minta script, perbaiki error, atau pahami kode. Jawaban memakai Luau modern.</span></li>
+        <li><b>Generate 3D model</b><span>Unggah gambar, dapatkan model blok bertingkat untuk Roblox Studio.</span></li>
+        <li><b>Upload ke Roblox</b><span>Kirim decal, audio, dan model ke akun atau grupmu lewat Roblox Open Cloud.</span></li>
+      </ul>
+<pre class="snip"><span class="c">-- contoh keluaran asisten</span>
+<span class="k">local</span> Players = game:GetService(<span class="s">"Players"</span>)
+Players.PlayerAdded:Connect(<span class="k">function</span>(player)
+	print(player.Name .. <span class="s">" masuk"</span>)
+<span class="k">end</span>)</pre>
+    </div>
+
+    <div class="card">
+      <h2 id="loginTitle">Masuk ke AL STUDIO</h2>
+      <div class="seg" role="tablist" aria-label="Mode akun">
+        <button type="button" role="tab" id="modeIn" aria-selected="true">Masuk</button>
+        <button type="button" role="tab" id="modeUp" aria-selected="false">Daftar</button>
+      </div>
+      <button type="button" class="btn google" id="googleBtn">
+        <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.8.54-1.84.86-3.04.86-2.34 0-4.32-1.58-5.03-3.71H.96v2.33A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.97 10.71a5.4 5.4 0 0 1 0-3.42V4.96H.96a9 9 0 0 0 0 8.08l3.01-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58A9 9 0 0 0 .96 4.96l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58z"/></svg>
+        Lanjut dengan Google
+      </button>
+      <div class="or">atau</div>
+      <form class="form" id="loginForm" novalidate>
+        <div class="field">
+          <label for="email" class="label">Email</label>
+          <input id="email" type="email" autocomplete="email" placeholder="kamu@email.com" required>
+        </div>
+        <div class="field">
+          <label for="pass" class="label">Kata sandi</label>
+          <input id="pass" type="password" autocomplete="current-password" placeholder="Minimal 6 karakter" required>
+        </div>
+        <button type="submit" class="btn btn--primary" id="loginSubmit">Masuk</button>
+        <p class="msg" id="loginMsg" role="status" aria-live="polite"></p>
+      </form>
+      <p class="fine" id="fineLogin">Mode demo: Firebase belum diisi di config.js. Email hanya diingat di perangkat ini, kata sandi tidak disimpan.</p>
+    </div>
+  </section>
+
+  <!-- APP -->
+  <section id="appView" hidden>
+    <header class="top">
+      <div class="brand__name"><span class="brand__mark" aria-hidden="true">AL</span><span class="brand__text"><b>AL STUDIO</b><small>AI &amp; GENERATE 3D MODEL</small></span></div>
+      <div class="top__user">
+        <span class="top__mail" id="who"></span>
+        <button type="button" class="btn" id="logout">Keluar</button>
+      </div>
+    </header>
+
+    <div class="tabs" role="tablist" aria-label="Alat">
+      <button type="button" role="tab" id="tabAssist" aria-selected="true">Asisten AI</button>
+      <button type="button" role="tab" id="tabModel" aria-selected="false">Generate 3D</button>
+      <button type="button" role="tab" id="tabUpload" aria-selected="false">Upload Roblox</button>
+    </div>
+
+    <!-- Assistant -->
+    <div id="paneAssist" class="assist">
+      <div class="chat">
+        <div class="chat__log" id="log" aria-live="polite">
+          <div class="m m--ai">
+            <span class="m__who">Asisten Luau</span>
+            <div class="m__body" id="welcome"></div>
+          </div>
+        </div>
+        <div class="starters" id="starters">
+          <button type="button" class="chip">Buat leaderboard dengan DataStore</button>
+          <button type="button" class="chip">Jelaskan RemoteEvent vs RemoteFunction</button>
+          <button type="button" class="chip">Buat tombol GUI dengan Tween</button>
+          <button type="button" class="chip">Buat sistem checkpoint obby</button>
+        </div>
+        <form class="composer" id="composer">
+          <div class="composer__row">
+            <div class="field">
+              <label for="kind" class="label">Jenis script</label>
+              <select id="kind">
+                <option>Script (server)</option>
+                <option>LocalScript (klien)</option>
+                <option>ModuleScript</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="prompt" class="label">Pesan</label>
+              <textarea id="prompt" placeholder="Tulis permintaan, atau tempel script yang error beserta pesan errornya."></textarea>
+            </div>
+          </div>
+          <div class="composer__actions">
+            <p class="msg" id="chatMsg" role="status"></p>
+            <div style="display:flex; gap:8px; flex-wrap:wrap">
+              <button type="button" class="btn" id="stop" hidden>Berhenti</button>
+              <button type="submit" class="btn btn--primary" id="send">Kirim</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Image to model -->
+    <div id="paneModel" class="bench" hidden>
+      <div class="panel">
+        <div>
+          <h3 style="font-size:20px">Pengaturan</h3>
+          <p class="fine" style="margin-top:4px">Gambar diproses di browser kamu, tidak diunggah ke mana pun.</p>
+        </div>
+        <label class="drop" id="drop" for="file">
+          <b>Pilih atau seret gambar</b>
+          <span class="fine" id="srcName">Sedang memakai gambar contoh</span>
+          <input id="file" type="file" accept="image/png,image/jpeg,image/webp,image/gif">
+        </label>
+        <div class="range">
+          <div class="range__top"><label for="res">Resolusi (sisi terpanjang)</label><output id="resO">40</output></div>
+          <input id="res" type="range" min="12" max="72" step="2" value="40">
+        </div>
+        <div class="range">
+          <div class="range__top"><label for="relief">Tinggi relief (stud)</label><output id="reliefO">6</output></div>
+          <input id="relief" type="range" min="0" max="16" step="1" value="6">
+        </div>
+        <div class="field">
+          <label for="cell" class="label">Ukuran tiap blok</label>
+          <select id="cell">
+            <option value="1">1 stud</option>
+            <option value="2" selected>2 stud</option>
+            <option value="4">4 stud</option>
+          </select>
+        </div>
+        <label class="check"><input type="checkbox" id="invert"> Gelap jadi tinggi</label>
+        <label class="check"><input type="checkbox" id="merge" checked> Gabungkan blok sewarna (lebih sedikit Part)</label>
+        <div class="field">
+          <label for="mname" class="label">Nama model</label>
+          <input id="mname" type="text" value="ModelGambar" maxlength="40">
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="stage"><canvas id="view" aria-label="Pratinjau model"></canvas></div>
+        <div class="stats" id="stats"></div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center">
+          <button type="button" class="btn btn--primary" id="download">Unduh model Roblox</button>
+          <button type="button" class="btn" id="toUpload">Kirim ke Upload Roblox</button>
+          <p class="msg" id="dlMsg" role="status"></p>
+        </div>
+        <ol class="steps">
+          <li>Unduh file <b>.rbxmx</b> di atas.</li>
+          <li>Di Roblox Studio, klik kanan Workspace lalu pilih <b>Insert from File</b>.</li>
+          <li>Atau pakai <b>Kirim ke Upload Roblox</b> untuk mengunggahnya ke akun atau grupmu.</li>
+        </ol>
+        <p class="note">Hasilnya model blok bertingkat dari warna gambar, bukan model 3D buatan AI. Formatnya .rbxmx (XML), yang dibuka Studio sama seperti .rbxm.</p>
+      </div>
+    </div>
+
+    <!-- Upload to Roblox -->
+    <div id="paneUpload" class="upl" hidden>
+      <div class="panel">
+        <div>
+          <h3 style="font-size:20px">Upload ke Roblox</h3>
+          <p class="fine" id="upHint" style="margin-top:4px">Upload gambar PNG/JPG/BMP/TGA.</p>
+        </div>
+        <div class="types" id="upTypes">
+          <button type="button" class="typecard" data-t="decal" aria-pressed="true"><span class="typecard__i">&#9639;</span><b>Decal</b><small>Gambar</small></button>
+          <button type="button" class="typecard" data-t="audio" aria-pressed="false"><span class="typecard__i">&#9835;</span><b>Audio</b><small>MP3 / OGG</small></button>
+          <button type="button" class="typecard" data-t="file" aria-pressed="false"><span class="typecard__i">&#11041;</span><b>Model</b><small>RBXM / FBX</small></button>
+        </div>
+        <form class="form" id="upForm">
+          <div class="field"><label class="label" for="upFile">Pilih file</label><input id="upFile" type="file" accept=".png,.jpg,.jpeg,.bmp,.tga" required></div>
+          <div class="field"><label class="label" for="upKey">Roblox API Key</label><input id="upKey" type="password" autocomplete="off" placeholder="Tempel API key Roblox" required><span class="fine">Kunci hanya dikirim ke server untuk upload ini dan tidak disimpan.</span></div>
+          <div class="field"><label class="label" for="upName">Nama aset</label><input id="upName" maxlength="50" placeholder="Contoh: My Awesome Model" required></div>
+          <div class="field">
+            <label class="label" for="upTarget">Upload ke</label>
+            <div class="targetrow"><select id="upTarget"><option value="user">Akun</option><option value="group">Grup</option></select><input id="upOwner" inputmode="numeric" placeholder="User ID" aria-label="User ID" required></div>
+          </div>
+          <div class="field"><label class="label" for="upDesc">Deskripsi</label><textarea id="upDesc" rows="3" maxlength="1000" placeholder="Jelaskan tentang aset ini..."></textarea><span class="fine" id="upCount">0 / 1000 karakter</span></div>
+          <button type="submit" class="btn btn--primary" id="upGo">Upload Sekarang</button>
+          <div class="result" id="upResult" role="status" aria-live="polite" hidden><b id="upResT"></b><p id="upResM"></p><a id="upResL" target="_blank" rel="noopener">Buka aset</a></div>
+          <p class="fine">Pastikan API key punya izin Assets yang diperlukan. Jangan bagikan API key kepada orang lain.</p>
+        </form>
+      </div>
+      <div class="panel">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:10px"><h3 style="font-size:20px">Riwayat upload</h3><button type="button" class="btn" id="upClear" style="min-height:34px; padding:0 12px">Hapus</button></div>
+        <div class="hist" id="upHist"></div>
+        <p class="note">Roblox memeriksa setiap aset sebelum disetujui. Hasil akhirnya mengikuti respons Roblox.</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="config.js"></script>
+<script>
+(function () {
+  var $ = function (s) { return document.querySelector(s); };
+  var store = {
+    get: function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    set: function (k, v) { try { localStorage.setItem(k, v); } catch (e) {} },
+    del: function (k) { try { localStorage.removeItem(k); } catch (e) {} }
+  };
+
+  /* ---------- Login ---------- */
+  var mode = "in";
+  function setMode(m) {
+    mode = m;
+    $("#modeIn").setAttribute("aria-selected", String(m === "in"));
+    $("#modeUp").setAttribute("aria-selected", String(m === "up"));
+    $("#loginTitle").textContent = m === "in" ? "Masuk ke AL STUDIO" : "Buat akun AL STUDIO";
+    $("#loginSubmit").textContent = m === "in" ? "Masuk" : "Daftar";
+    $("#pass").autocomplete = m === "in" ? "current-password" : "new-password";
+    setLoginMsg("", "");
+  }
+  function setLoginMsg(t, kind) { var m = $("#loginMsg"); m.textContent = t; m.className = "msg" + (kind ? " msg--" + kind : ""); }
+  $("#modeIn").onclick = function () { setMode("in"); };
+  $("#modeUp").onclick = function () { setMode("up"); };
+  var CFG = window.LUAULAB_CONFIG || {};
+  var API = String(CFG.apiUrl || "").replace(/\/$/, "");
+  var fb = null;
+  try {
+    if (CFG.firebase && CFG.firebase.apiKey && window.firebase) { firebase.initializeApp(CFG.firebase); fb = firebase.auth(); }
+  } catch (e) { fb = null; }
+  var AUTH_ERR = {
+    "auth/invalid-credential": "Email atau kata sandi salah.",
+    "auth/wrong-password": "Email atau kata sandi salah.",
+    "auth/user-not-found": "Akun belum terdaftar. Pilih Daftar dulu.",
+    "auth/email-already-in-use": "Email ini sudah terdaftar. Pilih Masuk.",
+    "auth/weak-password": "Kata sandi terlalu lemah. Pakai minimal 6 karakter.",
+    "auth/too-many-requests": "Terlalu banyak percobaan. Coba lagi beberapa menit lagi.",
+    "auth/popup-closed-by-user": "Jendela Google ditutup sebelum selesai.",
+    "auth/unauthorized-domain": "Domain ini belum didaftarkan di Firebase (Authorized domains).",
+    "auth/network-request-failed": "Koneksi bermasalah. Periksa internet lalu coba lagi."
+  };
+  $("#googleBtn").onclick = function () {
+    if (!fb) { setLoginMsg("Login Google aktif setelah Firebase diisi di config.js. Pakai email untuk mode demo.", "err"); return; }
+    fb.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(function (e) {
+      setLoginMsg(AUTH_ERR[e.code] || "Login Google gagal. Coba lagi.", "err");
+    });
+  };
+  $("#loginForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var email = $("#email").value.trim(), pass = $("#pass").value;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setLoginMsg("Format email belum benar. Contoh: nama@email.com", "err"); return; }
+    if (pass.length < 6) { setLoginMsg("Kata sandi minimal 6 karakter.", "err"); return; }
+    if (fb) {
+      var job = mode === "in" ? fb.signInWithEmailAndPassword(email, pass) : fb.createUserWithEmailAndPassword(email, pass);
+      setLoginMsg("Memproses...", "");
+      job.then(function () { $("#pass").value = ""; setLoginMsg("", ""); })
+         .catch(function (e) { setLoginMsg(AUTH_ERR[e.code] || "Gagal masuk. Coba lagi.", "err"); });
+      return;
+    }
+    store.set("luaulab.email", email);
+    $("#pass").value = "";
+    showApp(email);
+  });
+  function showApp(email) {
+    $("#loginView").hidden = true; $("#appView").hidden = false;
+    $("#who").textContent = email;
+    if (!$("#paneModel").hidden) rebuild();
+  }
+  function showLogin() { $("#appView").hidden = true; $("#loginView").hidden = false; setMode("in"); }
+  $("#logout").onclick = function () {
+    store.del("luaulab.email");
+    if (fb) fb.signOut(); else showLogin();
+  };
+  if (fb) {
+    $("#fineLogin").textContent = "Akunmu dikelola Firebase Authentication.";
+    fb.onAuthStateChanged(function (u) { if (u) showApp(u.email || u.displayName || "Akun Google"); else showLogin(); });
+  }
+
+  /* ---------- Tabs ---------- */
+  function setTab(t) {
+    [["assist", "#tabAssist", "#paneAssist"], ["model", "#tabModel", "#paneModel"], ["upload", "#tabUpload", "#paneUpload"]].forEach(function (x) {
+      $(x[1]).setAttribute("aria-selected", String(x[0] === t));
+      $(x[2]).hidden = x[0] !== t;
+    });
+    if (t === "model") rebuild();
+  }
+  $("#tabAssist").onclick = function () { setTab("assist"); };
+  $("#tabModel").onclick = function () { setTab("model"); };
+  $("#tabUpload").onclick = function () { setTab("upload"); };
+
+  /* ---------- Message rendering ---------- */
+  function inline(text) {
+    var frag = document.createDocumentFragment();
+    text.split(/(`[^`\n]+`|\*\*[^*\n]+\*\*)/).forEach(function (tok) {
+      if (!tok) return;
+      if (tok.charAt(0) === "`" && tok.length > 2) { var c = document.createElement("code"); c.className = "i"; c.textContent = tok.slice(1, -1); frag.appendChild(c); }
+      else if (tok.indexOf("**") === 0 && tok.length > 4) { var b = document.createElement("b"); b.textContent = tok.slice(2, -2); frag.appendChild(b); }
+      else frag.appendChild(document.createTextNode(tok));
+    });
+    return frag;
+  }
+  function copyText(text, btn, codeEl) {
+    var done = function () { var o = btn.textContent; btn.textContent = "Tersalin"; setTimeout(function () { btn.textContent = o; }, 1400); };
+    var fallback = function () {
+      try { var r = document.createRange(); r.selectNodeContents(codeEl); var s = getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent = "Tekan salin"; } catch (e) {}
+    };
+    try { navigator.clipboard.writeText(text).then(done, fallback); } catch (e) { fallback(); }
+  }
+  function codeBlock(raw) {
+    var lang = "luau", body = raw;
+    var nl = raw.indexOf("\n");
+    if (nl > -1 && /^[a-z0-9+#-]*$/i.test(raw.slice(0, nl).trim())) { lang = raw.slice(0, nl).trim() || "luau"; body = raw.slice(nl + 1); }
+    body = body.replace(/\n$/, "");
+    var wrap = document.createElement("div"); wrap.className = "code";
+    var bar = document.createElement("div"); bar.className = "code__bar";
+    var l = document.createElement("span"); l.textContent = lang;
+    var btn = document.createElement("button"); btn.type = "button"; btn.textContent = "Salin";
+    var pre = document.createElement("pre"); var code = document.createElement("code"); code.textContent = body; pre.appendChild(code);
+    btn.onclick = function () { copyText(body, btn, code); };
+    bar.appendChild(l); bar.appendChild(btn); wrap.appendChild(bar); wrap.appendChild(pre);
+    return wrap;
+  }
+  function renderMsg(el, text) {
+    el.textContent = "";
+    text.split("```").forEach(function (part, i) {
+      if (i % 2 === 1) { el.appendChild(codeBlock(part)); return; }
+      part.split(/\n{2,}/).forEach(function (para) {
+        if (!para.trim()) return;
+        var p = document.createElement("p"); p.className = "t";
+        p.appendChild(inline(para.trim().replace(/^[-*] /gm, "• ")));
+        el.appendChild(p);
+      });
+    });
+  }
+  renderMsg($("#welcome"),
+    "Halo! Aku bisa menulis, memperbaiki, dan menjelaskan script Luau untuk Roblox. Pilih jenis script, lalu tulis permintaanmu. Contoh jawaban:\n\n" +
+    "```lua\nlocal Players = game:GetService(\"Players\")\n\nPlayers.PlayerAdded:Connect(function(player)\n\tprint(player.Name .. \" masuk ke game\")\nend)\n```\n\n" +
+    "Taruh kode seperti ini di **ServerScriptService** sebagai Script.");
+
+  /* ---------- Luau assistant ---------- */
+  var RULES =
+    "Kamu adalah asisten pemrograman Luau untuk Roblox di situs AL STUDIO AI & GENERATE 3D MODEL. Jawab dalam bahasa yang dipakai pengguna (default Bahasa Indonesia), singkat dan praktis.\n" +
+    "- Tulis kode Luau modern: pakai task.wait/task.spawn, GetService, type annotation bila membantu, hindari API yang sudah usang.\n" +
+    "- Selalu taruh kode dalam blok ```lua dan sebutkan di mana script harus ditempatkan (ServerScriptService, StarterPlayerScripts, ReplicatedStorage, dst).\n" +
+    "- Untuk perbaikan bug, jelaskan penyebabnya dulu, lalu beri kode yang sudah diperbaiki.\n" +
+    "- Ingatkan validasi di server untuk RemoteEvent dan DataStore bila relevan.\n" +
+    "- Jangan membuat exploit, cheat, executor, atau script untuk merusak game orang lain. Tawarkan alternatif untuk game milik pengguna sendiri.\n" +
+    "Pesan pengguna berikut diawali jenis script yang dipilih.";
+  var sample = null, ctl = null, busy = false, turns = [];
+  async function authHeaders() {
+    var h = {};
+    if (fb && fb.currentUser) h.Authorization = "Bearer " + (await fb.currentUser.getIdToken());
+    return h;
+  }
+  async function callWorker(input, opts) {
+    var headers = await authHeaders();
+    headers["Content-Type"] = "application/json";
+    var res;
+    try {
+      res = await fetch(API + "/api/chat", { method: "POST", headers: headers, signal: opts.signal, body: JSON.stringify({ messages: input.slice(1) }) });
+    } catch (e) {
+      throw { code: e && e.name === "AbortError" ? "cancelled" : "upstream_error" };
+    }
+    if (!res.ok) throw { code: res.status === 401 ? "session_expired" : res.status === 429 ? "rate_limited" : res.status === 413 ? "prompt_too_large" : res.status === 503 ? "sampling_disabled" : "upstream_error" };
+    var data = await res.json();
+    if (!data.text) throw { code: "upstream_error" };
+    if (opts.onText) opts.onText({ text: data.text, delta: data.text });
+    return { text: data.text, truncated: !!data.truncated };
+  }
+  var ERR = {
+    not_granted: "Izin untuk memakai Claude belum diberikan. Muat ulang halaman dan izinkan saat diminta.",
+    sampling_disabled: "Asisten belum aktif di server. Isi ANTHROPIC_API_KEY (lihat README).",
+    rate_limited: "Terlalu banyak permintaan atau batas pemakaian tercapai. Coba lagi beberapa saat lagi.",
+    session_expired: "Sesi login berakhir. Keluar lalu masuk lagi.",
+    refused: "Permintaan itu ditolak. Ubah isi permintaannya lalu kirim lagi.",
+    prompt_too_large: "Pesan terlalu panjang. Kirim bagian script yang relevan saja."
+  };
+  function setChatMsg(t, kind) { var m = $("#chatMsg"); m.textContent = t; m.className = "msg" + (kind ? " msg--" + kind : ""); }
+  function setBusy(b) {
+    busy = b; $("#send").disabled = b || !sample; $("#stop").hidden = !b;
+  }
+  function addMsg(who, ai) {
+    var m = document.createElement("div"); m.className = "m " + (ai ? "m--ai" : "m--user");
+    var w = document.createElement("span"); w.className = "m__who"; w.textContent = who;
+    var b = document.createElement("div"); b.className = "m__body";
+    m.appendChild(w); m.appendChild(b); $("#log").appendChild(m);
+    $("#log").scrollTop = $("#log").scrollHeight;
+    return b;
+  }
+  async function send(text) {
+    text = text.trim();
+    if (!sample || busy || !text) return;
+    setChatMsg("", "");
+    $("#starters").hidden = true;
+    addMsg("Kamu", false).textContent = text;
+    turns.push({ role: "user", content: "[Jenis script: " + $("#kind").value + "]\n" + text });
+    var body = addMsg("Asisten Luau", true);
+    body.innerHTML = '<span class="dots">Berpikir</span>';
+    $("#prompt").value = "";
+    ctl = new AbortController(); setBusy(true);
+    try {
+      var r = await sample([{ role: "user", content: RULES }].concat(turns.slice(-12)), {
+        cache: false, signal: ctl.signal,
+        onText: function (u) { renderMsg(body, u.text); $("#log").scrollTop = $("#log").scrollHeight; }
+      });
+      renderMsg(body, r.text);
+      turns.push({ role: "assistant", content: r.text });
+      if (r.truncated) setChatMsg("Jawaban terpotong. Minta bagian berikutnya dengan pesan baru.", "");
+    } catch (e) {
+      turns.pop();
+      if (e.text) renderMsg(body, e.text); else body.textContent = "";
+      if (e.code !== "cancelled") {
+        var note = document.createElement("p"); note.className = "msg msg--err";
+        note.textContent = ERR[e.code] || "Terjadi gangguan. Coba kirim lagi.";
+        body.appendChild(note);
+      } else if (!e.text) body.parentNode.remove();
+    } finally { setBusy(false); ctl = null; $("#log").scrollTop = $("#log").scrollHeight; }
+  }
+  $("#composer").addEventListener("submit", function (e) { e.preventDefault(); send($("#prompt").value); });
+  $("#prompt").addEventListener("keydown", function (e) { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); send($("#prompt").value); } });
+  $("#stop").onclick = function () { if (ctl) ctl.abort(); };
+  document.querySelectorAll(".chip").forEach(function (c) { c.onclick = function () { $("#prompt").value = c.textContent; $("#prompt").focus(); }; });
+  $("#send").disabled = true;
+  setChatMsg("Menyambungkan asisten...", "");
+  (async function () {
+    if (location.protocol === "file:" && !API) setChatMsg("Jalankan lewat server (npm start) agar asisten aktif.", "err");
+    else { sample = callWorker; $("#send").disabled = false; setChatMsg("Ctrl+Enter untuk kirim.", ""); }
+  })();
+
+  /* ---------- Image to model ---------- */
+  var src = document.createElement("canvas");
+  var grid = null, parts = [];
+  function drawSample() {
+    var w = 360, h = 240; src.width = w; src.height = h;
+    var c = src.getContext("2d");
+    var g = c.createLinearGradient(0, 0, 0, h); g.addColorStop(0, "#2b2f78"); g.addColorStop(0.55, "#e0603f"); g.addColorStop(1, "#f7b45c");
+    c.fillStyle = g; c.fillRect(0, 0, w, h);
+    c.fillStyle = "#ffeeb0"; c.beginPath(); c.arc(w * 0.62, h * 0.52, h * 0.2, 0, 7); c.fill();
+    c.fillStyle = "#3b2a5a"; c.beginPath(); c.moveTo(0, h); c.lineTo(w * 0.22, h * 0.45); c.lineTo(w * 0.48, h); c.fill();
+    c.fillStyle = "#1d1733"; c.beginPath(); c.moveTo(w * 0.3, h); c.lineTo(w * 0.62, h * 0.62); c.lineTo(w, h); c.fill();
+  }
+  function loadFile(file) {
+    if (!file || !/^image\//.test(file.type)) { $("#dlMsg").textContent = "File harus berupa gambar."; $("#dlMsg").className = "msg msg--err"; return; }
+    var url = URL.createObjectURL(file), img = new Image();
+    img.onload = function () {
+      var s = Math.min(1, 512 / Math.max(img.width, img.height));
+      src.width = Math.max(1, Math.round(img.width * s)); src.height = Math.max(1, Math.round(img.height * s));
+      var c = src.getContext("2d"); c.clearRect(0, 0, src.width, src.height); c.drawImage(img, 0, 0, src.width, src.height);
+      URL.revokeObjectURL(url);
+      $("#srcName").textContent = file.name; $("#dlMsg").textContent = ""; rebuild();
+    };
+    img.onerror = function () { URL.revokeObjectURL(url); $("#dlMsg").textContent = "Gambar tidak bisa dibaca. Coba file lain."; $("#dlMsg").className = "msg msg--err"; };
+    img.src = url;
+  }
+  $("#file").addEventListener("change", function (e) { loadFile(e.target.files[0]); });
+  var drop = $("#drop");
+  ["dragenter", "dragover"].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add("over"); }); });
+  ["dragleave", "drop"].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove("over"); }); });
+  drop.addEventListener("drop", function (e) { if (e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]); });
+
+  function settings() {
+    return { res: +$("#res").value, relief: +$("#relief").value, cell: +$("#cell").value, inv: $("#invert").checked, merge: $("#merge").checked };
+  }
+  function sampleGrid() {
+    var o = settings(), asp = src.width / src.height, W, H;
+    if (asp >= 1) { W = o.res; H = Math.max(1, Math.round(o.res / asp)); } else { H = o.res; W = Math.max(1, Math.round(o.res * asp)); }
+    var t = document.createElement("canvas"); t.width = W; t.height = H;
+    var c = t.getContext("2d", { willReadFrequently: true }); c.imageSmoothingQuality = "high"; c.drawImage(src, 0, 0, W, H);
+    var d = c.getImageData(0, 0, W, H).data, q = o.merge ? 16 : 1, cells = [], maxh = 1;
+    for (var j = 0; j < H; j++) for (var i = 0; i < W; i++) {
+      var k = (j * W + i) * 4, a = d[k + 3];
+      if (a < 30) { cells.push(null); continue; }
+      var lum = (0.299 * d[k] + 0.587 * d[k + 1] + 0.114 * d[k + 2]) / 255;
+      var hs = o.relief === 0 ? 1 : Math.max(1, Math.round(1 + (o.inv ? 1 - lum : lum) * o.relief));
+      var f = function (v) { return Math.max(0, Math.min(255, Math.round(v / q) * q)); };
+      cells.push({ r: f(d[k]), g: f(d[k + 1]), b: f(d[k + 2]), h: hs });
+      if (hs > maxh) maxh = hs;
+    }
+    return { W: W, H: H, cells: cells, maxh: maxh, cell: o.cell, merge: o.merge };
+  }
+  function buildParts(gr) {
+    var out = [];
+    for (var j = 0; j < gr.H; j++) {
+      var i = 0;
+      while (i < gr.W) {
+        var c = gr.cells[j * gr.W + i];
+        if (!c) { i++; continue; }
+        var n = 1;
+        if (gr.merge) while (i + n < gr.W) {
+          var d = gr.cells[j * gr.W + i + n];
+          if (d && d.r === c.r && d.g === c.g && d.b === c.b && d.h === c.h) n++; else break;
+        }
+        out.push({ i: i, j: j, n: n, r: c.r, g: c.g, b: c.b, h: c.h });
+        i += n;
+      }
+    }
+    return out;
+  }
+  function shade(c, f) { return "rgb(" + Math.round(c.r * f) + "," + Math.round(c.g * f) + "," + Math.round(c.b * f) + ")"; }
+  function drawView() {
+    var cv = $("#view"), box = cv.getBoundingClientRect();
+    if (!box.width || !grid) return;
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    cv.width = Math.round(box.width * dpr); cv.height = Math.round(box.height * dpr);
+    var ctx = cv.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, box.width, box.height);
+    var W = grid.W, H = grid.H, hu0 = 1 / grid.cell;
+    var bw = W + H, bh = (W + H) / 2 + grid.maxh * hu0;
+    var sc = Math.min(box.width / bw, box.height / bh) * 0.94;
+    var tw = 2 * sc, th = sc, hu = hu0 * sc;
+    var offX = (box.width - bw * sc) / 2 + H * sc;
+    var offY = (box.height - bh * sc) / 2 + grid.maxh * hu;
+    ctx.lineWidth = 0.6; ctx.lineJoin = "round";
+    for (var i = 0; i < W; i++) for (var j = 0; j < H; j++) {
+      var c = grid.cells[j * W + i]; if (!c) continue;
+      var x0 = (i - j) * tw / 2 + offX, y0 = (i + j) * th / 2 + offY, z = c.h * hu;
+      var poly = function (pts, col) {
+        ctx.beginPath(); ctx.moveTo(pts[0], pts[1]);
+        for (var p = 2; p < pts.length; p += 2) ctx.lineTo(pts[p], pts[p + 1]);
+        ctx.closePath(); ctx.fillStyle = col; ctx.strokeStyle = col; ctx.fill(); ctx.stroke();
+      };
+      poly([x0 - tw / 2, y0 + th / 2 - z, x0, y0 + th - z, x0, y0 + th, x0 - tw / 2, y0 + th / 2], shade(c, 0.74));
+      poly([x0, y0 + th - z, x0 + tw / 2, y0 + th / 2 - z, x0 + tw / 2, y0 + th / 2, x0, y0 + th], shade(c, 0.56));
+      poly([x0, y0 - z, x0 + tw / 2, y0 + th / 2 - z, x0, y0 + th - z, x0 - tw / 2, y0 + th / 2 - z], shade(c, 1));
+    }
+  }
+  var pending = false;
+  function rebuild() {
+    if (pending) return; pending = true;
+    requestAnimationFrame(function () {
+      pending = false;
+      if ($("#paneModel").hidden) return;
+      $("#resO").textContent = $("#res").value; $("#reliefO").textContent = $("#relief").value;
+      grid = sampleGrid(); parts = buildParts(grid);
+      drawView();
+      var s = grid.cell;
+      $("#stats").innerHTML = "";
+      [["Blok", grid.cells.filter(Boolean).length], ["Part di Studio", parts.length], ["Ukuran", grid.W * s + " × " + grid.H * s + " stud"], ["Tinggi maks", grid.maxh + " stud"]].forEach(function (p) {
+        var sp = document.createElement("span"); sp.append(p[0] + " "); var b = document.createElement("b"); b.textContent = p[1]; sp.appendChild(b); $("#stats").appendChild(sp);
+      });
+    });
+  }
+  ["res", "relief", "cell", "invert", "merge"].forEach(function (id) { $("#" + id).addEventListener("input", rebuild); });
+  window.addEventListener("resize", function () { if (!$("#paneModel").hidden) drawView(); });
+
+  function num(v) { return String(+v.toFixed(3)); }
+  function buildXml() {
+    var s = grid.cell, W = grid.W, H = grid.H;
+    var name = ($("#mname").value || "ModelGambar").replace(/[^A-Za-z0-9 _-]/g, "") || "ModelGambar";
+    var x = ['<roblox xmlns:xmime="http://www.w3.org/2005/05/xmlmime" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.roblox.com/roblox.xsd" version="4">',
+      '<Item class="Model" referent="RBX0"><Properties><string name="Name">' + name + '</string></Properties>'];
+    parts.forEach(function (p, n) {
+      var cx = (p.i + p.n / 2) * s - W * s / 2, cy = p.h / 2, cz = (p.j + 0.5) * s - H * s / 2;
+      var col = ((0xff000000 | (p.r << 16) | (p.g << 8) | p.b) >>> 0);
+      x.push('<Item class="Part" referent="RBX' + (n + 1) + '"><Properties><string name="Name">Blok</string><bool name="Anchored">true</bool>' +
+        '<token name="Material">256</token><token name="TopSurface">0</token><token name="BottomSurface">0</token>' +
+        '<Color3uint8 name="Color3uint8">' + col + '</Color3uint8>' +
+        '<CoordinateFrame name="CFrame"><X>' + num(cx) + '</X><Y>' + num(cy) + '</Y><Z>' + num(cz) + '</Z><R00>1</R00><R01>0</R01><R02>0</R02><R10>0</R10><R11>1</R11><R12>0</R12><R20>0</R20><R21>0</R21><R22>1</R22></CoordinateFrame>' +
+        '<Vector3 name="size"><X>' + num(p.n * s) + '</X><Y>' + num(p.h) + '</Y><Z>' + num(s) + '</Z></Vector3></Properties></Item>');
+    });
+    x.push("</Item></roblox>");
+    return { xml: x.join("\n"), name: name };
+  }
+  var dl = null;
+  function setDl(t, kind) { var m = $("#dlMsg"); m.textContent = t; m.className = "msg" + (kind ? " msg--" + kind : ""); }
+  $("#download").onclick = async function () {
+    if (!grid || !parts.length) { setDl("Belum ada blok untuk diunduh. Coba gambar lain.", "err"); return; }
+    var b = buildXml();
+    try {
+      var url = URL.createObjectURL(new Blob([b.xml], { type: "application/xml" }));
+      var a = document.createElement("a"); a.href = url; a.download = b.name + ".rbxmx";
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+      setDl("File " + b.name + ".rbxmx diunduh.", "ok");
+    } catch (e) { setDl("Unduhan gagal. Coba lagi.", "err"); }
+  };
+
+  /* ---------- Upload ke Roblox ---------- */
+  var UP = {
+    decal: { hint: "Upload gambar PNG/JPG/BMP/TGA.", accept: ".png,.jpg,.jpeg,.bmp,.tga", icon: "▧" },
+    audio: { hint: "Upload audio MP3/OGG/WAV/FLAC.", accept: ".mp3,.ogg,.wav,.flac", icon: "♫" },
+    file: { hint: "Upload model RBXM/RBXMX/FBX.", accept: ".rbxm,.rbxmx,.fbx", icon: "⬡" }
+  };
+  var upType = "decal";
+  function setUpType(t) {
+    if (!UP[t]) return;
+    upType = t;
+    $("#upHint").textContent = UP[t].hint; $("#upFile").accept = UP[t].accept;
+    document.querySelectorAll("#upTypes button").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.t === t)); });
+  }
+  document.querySelectorAll("#upTypes button").forEach(function (b) { b.onclick = function () { setUpType(b.dataset.t); }; });
+  $("#upTarget").addEventListener("change", function () {
+    var g = $("#upTarget").value === "group";
+    $("#upOwner").placeholder = g ? "Group ID" : "User ID"; $("#upOwner").setAttribute("aria-label", g ? "Group ID" : "User ID");
+  });
+  $("#upFile").addEventListener("change", function () {
+    var f = $("#upFile").files[0];
+    if (f && !$("#upName").value) $("#upName").value = f.name.replace(/\.[^.]+$/, "").slice(0, 50);
+  });
+  $("#upDesc").addEventListener("input", function () { $("#upCount").textContent = $("#upDesc").value.length + " / 1000 karakter"; });
+  function upHistory() { try { return JSON.parse(store.get("alstudio.upHistory") || "[]"); } catch (e) { return []; } }
+  function renderUpHist() {
+    var box = $("#upHist"), items = upHistory();
+    box.textContent = "";
+    if (!items.length) { var d = document.createElement("p"); d.className = "empty"; d.textContent = "Belum ada riwayat upload di browser ini."; box.appendChild(d); return; }
+    items.slice(0, 8).forEach(function (it) {
+      var row = document.createElement("div"); row.className = "hist__item";
+      var ic = document.createElement("span"); ic.className = "hist__i"; ic.textContent = (UP[it.type] || UP.file).icon;
+      var bd = document.createElement("div"); bd.style.minWidth = "0";
+      var n = document.createElement("div"); n.className = "hist__n"; n.textContent = it.name;
+      var m = document.createElement("div"); m.className = "hist__m"; m.textContent = String(it.type || "file").toUpperCase() + " · ID " + it.assetId;
+      bd.appendChild(n); bd.appendChild(m);
+      var a = document.createElement("a"); a.className = "hist__a"; a.target = "_blank"; a.rel = "noopener"; a.textContent = "Buka";
+      if (/^https:\/\/create\.roblox\.com\//.test(it.url || "")) a.href = it.url; else a.hidden = true;
+      row.appendChild(ic); row.appendChild(bd); row.appendChild(a); box.appendChild(row);
+    });
+  }
+  $("#upClear").onclick = function () { store.del("alstudio.upHistory"); renderUpHist(); };
+  function showUpResult(ok, title, msg, url) {
+    var r = $("#upResult"); r.hidden = false; r.className = "result " + (ok ? "ok" : "err");
+    $("#upResT").textContent = title; $("#upResM").textContent = msg;
+    var l = $("#upResL");
+    if (url && /^https:\/\/create\.roblox\.com\//.test(url)) { l.href = url; l.hidden = false; } else l.hidden = true;
+  }
+  $("#upForm").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    var file = $("#upFile").files[0];
+    if (!file) return;
+    var go = $("#upGo"); go.disabled = true; go.textContent = "Mengunggah...";
+    var d = new FormData();
+    d.append("type", upType); d.append("file", file); d.append("apiKey", $("#upKey").value.trim());
+    d.append("target", $("#upTarget").value); d.append("ownerId", $("#upOwner").value.trim());
+    d.append("name", $("#upName").value.trim()); d.append("description", $("#upDesc").value);
+    try {
+      var r = await fetch(API + "/api/upload", { method: "POST", headers: await authHeaders(), body: d });
+      var j; try { j = await r.json(); } catch (x) { j = { error: "Respons server tidak dapat dibaca" }; }
+      if (r.ok && j.ok) {
+        var items = upHistory();
+        items.unshift({ type: upType, name: j.name || $("#upName").value, assetId: j.assetId, url: j.url || "", time: Date.now() });
+        store.set("alstudio.upHistory", JSON.stringify(items.slice(0, 20)));
+        renderUpHist();
+        showUpResult(true, "Upload berhasil", (j.name || $("#upName").value) + "\nAsset ID: " + j.assetId, j.url);
+      } else showUpResult(false, "Upload gagal", j.error || ("Server merespons dengan status " + r.status));
+    } catch (err) {
+      showUpResult(false, "Tidak dapat terhubung", "Periksa koneksi internet dan pastikan server sedang berjalan.");
+    } finally { go.disabled = false; go.textContent = "Upload Sekarang"; }
+  });
+  $("#toUpload").onclick = function () {
+    if (!grid || !parts.length) { setDl("Belum ada blok untuk dikirim. Coba gambar lain.", "err"); return; }
+    var b = buildXml();
+    var f = new File([b.xml], b.name + ".rbxmx", { type: "application/xml" });
+    try { var dt = new DataTransfer(); dt.items.add(f); $("#upFile").files = dt.files; }
+    catch (err) { setDl("Browser ini belum bisa mengirim file otomatis. Unduh dulu, lalu pilih file di tab Upload Roblox.", "err"); return; }
+    setUpType("file");
+    $("#upName").value = b.name;
+    setTab("upload");
+  };
+  setUpType("decal"); renderUpHist();
+
+  /* ---------- Boot ---------- */
+  drawSample();
+  var saved = store.get("luaulab.email");
+  if (saved && !fb) showApp(saved);
+})();
+</script>
+</body>
+</html>
